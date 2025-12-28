@@ -20,6 +20,7 @@ public class Program
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
         builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>();
         builder.Services.AddControllersWithViews();
 
@@ -32,7 +33,19 @@ public class Program
         using (var scope = app.Services.CreateScope())
         {
             var userManager = scope.ServiceProvider.GetService<UserManager<IdentityUser>>();
+            var roleManager = scope.ServiceProvider.GetService<RoleManager<IdentityRole>>();
             var context = scope.ServiceProvider.GetService<ApplicationDbContext>();
+            
+            // Create roles if they don't exist
+            var roles = new[] { "Admin", "User" };
+            foreach (var role in roles)
+            {
+                if (roleManager != null && !roleManager.RoleExistsAsync(role).Result)
+                {
+                    roleManager.CreateAsync(new IdentityRole(role)).Wait();
+                }
+            }
+            
             if (userManager?.Users.Count() == 0)
             {
                 IdentityUser user = new IdentityUser()
@@ -48,6 +61,18 @@ public class Program
                 user.PasswordHash = userManager.PasswordHasher.HashPassword(user, "rdpgateway");
                 context?.Users.Update(user);
                 context?.SaveChanges();
+                
+                // Assign Admin role to admin@example.com
+                userManager.AddToRoleAsync(user, "Admin").Wait();
+            }
+            else if (userManager != null)
+            {
+                // If admin@example.com exists but doesn't have Admin role, add it
+                var adminUser = userManager.FindByNameAsync("admin@example.com").Result;
+                if (adminUser != null && !userManager.IsInRoleAsync(adminUser, "Admin").Result)
+                {
+                    userManager.AddToRoleAsync(adminUser, "Admin").Wait();
+                }
             }
         }
 
