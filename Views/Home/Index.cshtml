@@ -44,7 +44,7 @@
                             </p>
                         </div>
                         <div class="card-footer bg-light d-grid gap-2">
-                            <a href="rdp://@Context.Request.Host.Host/@resource.ResourceIdentifier" class="btn btn-primary btn-sm">
+                            <a href="rdp://full%20address=s:@resource.ResourceIdentifier&gatewayhostname=s:@Context.Request.Host.Host" class="btn btn-primary btn-sm">
                                 <i class="bi bi-play-circle"></i> Start Session
                             </a>
                             <a asp-action="DownloadRdpFile" asp-route-id="@resource.ResourceIdentifier" class="btn btn-secondary btn-sm">
